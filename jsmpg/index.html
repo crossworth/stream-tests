@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>JSMPG WebSocket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<canvas id="videoCanvas"></canvas>
+
+<script src="jsmpg.min.js"></script>
+<script>
+  const canvas = document.querySelector('#videoCanvas')
+  const url = 'ws://192.168.0.10/stream'
+  const player = new JSMpeg.Player(url, {
+    canvas: canvas,
+  })
+</script>
+
+</body>
+</html>
