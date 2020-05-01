@@ -81,13 +81,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		http.ServeFile(writer, request, "index.html")
-	})
-
-	http.HandleFunc("/jsmpg.min.js", func(writer http.ResponseWriter, request *http.Request) {
-		http.ServeFile(writer, request, "jsmpg.min.js")
-	})
+	http.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Access-Control-Allow-Origin", "*")
+		http.FileServer(http.Dir("./jsmpg")).ServeHTTP(writer, request)
+	}))
 
 	http.HandleFunc("/stream", handleWS)
 
