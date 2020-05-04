@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>fMP4 WebSocket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<video id="video" style="width:600px;" controls autoplay muted></video>
+
+<script>
+  const video = document.querySelector('#video')
+  const mediaSource = new MediaSource()
+  const mimeType = 'video/mp4'
+
+  let streamingStarted = false
+  let sourceBuffer = null
+
+  const queue = []
+
+  window.onload = () => {
+    mediaSource.addEventListener('sourceopen', () => {
+      sourceBuffer = mediaSource.addSourceBuffer(mimeType)
+      sourceBuffer.addEventListener('updateend', () => {
+        if (!sourceBuffer.updating) {
+          if (queue.length > 0) {
+            let element = queue.shift()
+            console.log('queue PULL:', queue.length)
+            sourceBuffer.appendBuffer(element)
+          } else {
+            streamingStarted = false
+          }
+        }
+      })
+    })
+
+    video.src = window.URL.createObjectURL(mediaSource)
+
+    const ws = new WebSocket('ws://192.168.0.10/stream')
+    ws.binaryType = 'arraybuffer'
+
+    ws.onopen = event => {
+      console.log('on open', event)
+    }
+
+    ws.onerror = error => {
+      console.log('on error', error)
+    }
+
+    ws.onmessage = event => {
+      console.log('on message', event)
+      const message = event.data
+
+      const view = new Uint8Array(message)
+      console.log('got', message.byteLength, 'bytes.  Values=', view[0], view[1], view[2], view[3], view[4])
+
+      if (!streamingStarted) {
+        console.log('Streaming started with', view[0], view[1], view[2], view[3], view[4])
+        sourceBuffer.appendBuffer(message)
+        streamingStarted = true
+        return
+      }
+
+      queue.push(message)
+      console.log('queue push:', queue.length)
+    }
+
+    ws.onclose = event => {
+      console.log('on close', event)
+    }
+  }
+</script>
+
+</body>
+</html>
